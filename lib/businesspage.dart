@@ -19,28 +19,29 @@ class _businesspageState extends State<businesspage> {
       appBar: AppBar(
         title: Text(business['Name']),
       ),
-      body: Center(
-        child: FutureBuilder(
-          future: _getImage(context, business['Logo']),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return Container(
-                width: MediaQuery.of(context).size.width / 1.2,
-                height: MediaQuery.of(context).size.width / 1.2,
-                child: snapshot.data,
-              );
-            }
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Container(
-                width: MediaQuery.of(context).size.width / 1.2,
-                height: MediaQuery.of(context).size.width / 1.2,
-                child: CircularProgressIndicator(),
-              );
-            }
-            return Container();
-          },
-        ),
-      ),
+      body: Container(
+        child: Image.network(business['Logo']),
+      ), //Center(
+      // child: FutureBuilder(
+      //   future: _getImage(context, business['Logo']),
+      //   builder: (context, snapshot) {
+      //     if (snapshot.connectionState == ConnectionState.done) {
+      //       return Container(
+      //         width: MediaQuery.of(context).size.width / 1.2,
+      //         height: MediaQuery.of(context).size.width / 1.2,
+      //         child: snapshot.data,
+      //       );
+      //     }
+      //     if (snapshot.connectionState == ConnectionState.waiting) {
+      //       return Container(
+      //         width: MediaQuery.of(context).size.width / 1.2,
+      //         height: MediaQuery.of(context).size.width / 1.2,
+      //         child: CircularProgressIndicator(),
+      //       );
+      //     }
+      //     return Container();
+      //   },
+      // ),
     );
   }
 }

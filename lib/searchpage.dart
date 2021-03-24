@@ -222,7 +222,8 @@ class _SearchPageState extends State<SearchPage> {
                                           Container(
                                             width: 100,
                                             height: 100,
-                                            //child: Image.asset('ecofriendly.png'),
+                                            //child:
+                                            //Image.asset('ecofriendly.png'),
                                           ),
                                           Padding(
                                             padding: const EdgeInsets.all(10.0),
