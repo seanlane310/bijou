@@ -25,13 +25,14 @@ dependencies:
     sdk: flutter
   cloud_firestore: ^1.0.1
   cupertino_icons: ^1.0.0
-  firebase_analytics: 5.0.2
+  firebase_analytics: '5.0.2'
   firebase_auth: ^1.0.1
   firebase_core: ^1.0.1
-  geolocator: 7.0.1
-  google_maps_flutter: 2.0.1
+  geolocator: '7.0.1'
+  google_maps_flutter: '2.0.1'
   firebase_storage: ^8.0.0
   provider: ^5.0.0
+  google_sign_in: ^4.5.3
 
 dev_dependencies:
   flutter_test:
