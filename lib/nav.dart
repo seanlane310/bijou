@@ -17,6 +17,7 @@ class _NavState extends State<Nav> {
   List<Widget> _widgetOptions = <Widget>[
     Text('Discover'),
     SearchPage(),
+    Text('Boards'),
     SignInPage(),
   ];
 
@@ -33,17 +34,23 @@ class _NavState extends State<Nav> {
         child: _widgetOptions.elementAt(_selectedIndex),
       ),
       bottomNavigationBar: BottomNavigationBar(
+        fixedColor: Colors.pink,
+        backgroundColor: Colors.pink,
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.lightbulb_outline),
+            icon: Icon(Icons.lightbulb_outline, color: Colors.grey),
             title: Text('Discover'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
+            icon: Icon(Icons.search, color: Colors.grey),
             title: Text('Search'),
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.account_circle_outlined),
+            icon: Icon(Icons.push_pin, color: Colors.grey),
+            title: Text('Boards'),
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle_outlined, color: Colors.grey),
             title: Text('Profile'),
           ),
         ],

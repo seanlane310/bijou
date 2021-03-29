@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:bijou/signinpage.dart';
 import 'package:bijou/authservice.dart';
-
+import 'package:firebase_database/firebase_database.dart';
 import 'searchpage.dart';
 
 void main() async {
@@ -27,12 +27,13 @@ class MyApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'bijou',
+        title: 'Bijou',
         theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
+          appBarTheme: AppBarTheme(
+            color: Colors.pinkAccent,
+          ),
         ),
-        home:
-            Nav(), //so i guess, when we implemenet discover, this will be Discover() which will have Nav()
+        home: Nav(),
       ),
     );
   }

@@ -49,6 +49,7 @@ class _GMapState extends State<GMap> {
   initMarker(business) async {
     print(business['Location'].latitude);
     _markers.add(Marker(
+        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose),
         markerId: MarkerId(marker_id_count.toString()),
         position: LatLng(
             business['Location'].latitude, business['Location'].longitude),
@@ -66,6 +67,8 @@ class _GMapState extends State<GMap> {
     controller.setMapStyle(Utils.mapStyle);
     setState(() {
       _markers.add(Marker(
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
           markerId: MarkerId(marker_id_count.toString()),
           position: LatLng(currentLocation.latitude, currentLocation.longitude),
           infoWindow: InfoWindow(

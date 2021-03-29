@@ -5,6 +5,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:bijou/gmap.dart';
 import 'package:bijou/businesspage.dart';
 import 'package:bijou/searchhist.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class SearchPage extends StatefulWidget {
   SearchPage({Key key}) : super(key: key);
@@ -20,28 +21,36 @@ class _SearchPageState extends State<SearchPage> {
   var currentLocation;
   var businesses = [];
   var closebusinesses = [];
-  var filterdist = '1';
+  var bus_dist = [];
+  var filterdist = '10';
   bool loading = true;
+
+  reloadMainPageState() {
+    setState(() {
+      loading = true;
+    });
+  }
 
   @override
   void initState() {
+    //reloadMainPageState();
     super.initState();
     Geolocator.getCurrentPosition().then((currloc) {
       setState(() {
         currentLocation = currloc;
         populateBusinesses();
-        filterResults(filterdist);
       });
     });
   }
 
   populateBusinesses() {
-    businesses = [];
     FirebaseFirestore.instance.collection('Businesses').get().then((docs) {
       if (docs.docs.isNotEmpty) {
         for (int i = 0; i < docs.docs.length; ++i) {
           businesses.add(docs.docs[i].data());
         }
+        print(businesses);
+        filterResults('10');
       }
     });
   }
@@ -58,11 +67,14 @@ class _SearchPageState extends State<SearchPage> {
       return Scaffold(
         appBar: AppBar(
           title: Text('Search'),
+          centerTitle: true,
           actions: <Widget>[
             IconButton(
                 icon: Icon(Icons.filter_list),
                 onPressed: () {
-                  closebusinesses.clear();
+                  setState(() {
+                    loading = true;
+                  });
                   getDist();
                 })
           ],
@@ -94,13 +106,13 @@ class _SearchPageState extends State<SearchPage> {
                           filled: true,
                           prefixIcon: Icon(
                             Icons.search,
-                            color: Colors.white,
+                            color: Colors.grey,
                             size: 30.0,
                           ),
                           suffixIcon: IconButton(
                             icon: Icon(
                               Icons.cancel,
-                              color: Colors.white,
+                              color: Colors.grey,
                             ),
                             onPressed: emptyTextFormField,
                           )),
@@ -135,7 +147,8 @@ class _SearchPageState extends State<SearchPage> {
                             return Text('Done');
 
                           default:
-                            if (closebusinesses.length > 0) {
+                            if (closebusinesses.length > 0 &&
+                                loading == false) {
                               return new ListView(
                                   children: snapshot.data.docs
                                       .map((DocumentSnapshot document) {
@@ -144,123 +157,709 @@ class _SearchPageState extends State<SearchPage> {
                                     ++i) {
                                   if (document['Name'] ==
                                       closebusinesses[i]['Name']) {
-                                    return new GestureDetector(
-                                      onTap: () {
-                                        userSearches(searchString);
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    businesspage(
+                                    if (closebusinesses[i]['Blackowned'] &&
+                                        closebusinesses[i]['Womenowned'] &&
+                                        closebusinesses[i]['Ecofriendly']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          userSearches(searchString);
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
                                                         business:
-                                                            closebusinesses[
-                                                                i])));
-                                      },
-                                      child: Card(
-                                          child: Row(
-                                        children: <Widget>[
-                                          Container(
-                                            width: 100,
-                                            height: 100,
-                                            //child: Image.asset('ecofriendly.png'),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: <Widget>[
-                                                Text(
-                                                  document['Name'],
-                                                  style: TextStyle(
-                                                    fontSize: 25,
-                                                    color: Colors.black,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-                                                Container(
-                                                  width: 200,
-                                                  child: Text(
-                                                    document['Description'],
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
                                                     style: TextStyle(
-                                                      fontSize: 15,
-                                                      color: Colors.grey[500],
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
                                                   ),
-                                                )
-                                              ],
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Row(
+                                                    children: <Widget>[
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/blackowned.png')),
+                                                      ),
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/womenowned.png')),
+                                                      ),
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/ecofriendly.png')),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else if (closebusinesses[i]
+                                            ['Blackowned'] &&
+                                        closebusinesses[i]['Womenowned']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          userSearches(searchString);
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
                                             ),
-                                          )
-                                        ],
-                                      )),
-                                    );
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Row(
+                                                    children: <Widget>[
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/blackowned.png')),
+                                                      ),
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/womenowned.png')),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else if (closebusinesses[i]
+                                            ['Blackowned'] &&
+                                        closebusinesses[i]['Ecofriendly']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          userSearches(searchString);
+                                          print('did it work');
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Row(
+                                                    children: <Widget>[
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/blackowned.png')),
+                                                      ),
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/ecofriendly.png')),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else if (closebusinesses[i]
+                                            ['Womenowned'] &&
+                                        closebusinesses[i]['Ecofriendly']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          userSearches(searchString);
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Row(
+                                                    children: <Widget>[
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/womenowned.png')),
+                                                      ),
+                                                      Container(
+                                                        width: 20,
+                                                        height: 20,
+                                                        alignment: Alignment(
+                                                            -1.0, 1.0),
+                                                        child: Image(
+                                                            image: AssetImage(
+                                                                'assets/ecofriendly.png')),
+                                                      )
+                                                    ],
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else if (closebusinesses[i]
+                                        ['Blackowned']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          userSearches(searchString);
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    alignment:
+                                                        Alignment(-1.0, 1.0),
+                                                    child: Image(
+                                                        image: AssetImage(
+                                                            'assets/blackowned.png')),
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else if (closebusinesses[i]
+                                        ['Womenowned']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          userSearches(searchString);
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    alignment:
+                                                        Alignment(-1.0, 1.0),
+                                                    child: Image(
+                                                        image: AssetImage(
+                                                            'assets/womenowned.png')),
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else if (closebusinesses[i]
+                                        ['Ecofriendly']) {
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          if (searchString.isNotEmpty) {
+                                            userSearches(searchString);
+                                          }
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 4,
+                                                  ),
+                                                  Container(
+                                                    width: 20,
+                                                    height: 20,
+                                                    alignment:
+                                                        Alignment(-1.0, 1.0),
+                                                    child: Image(
+                                                        image: AssetImage(
+                                                            'assets/ecofriendly.png')),
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
+                                    } else
+                                      return new GestureDetector(
+                                        onTap: () {
+                                          print(
+                                              closebusinesses[i]['ImageCount']);
+                                          userSearches(searchString);
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      businesspage(
+                                                        business:
+                                                            closebusinesses[i],
+                                                        bus_dis: bus_dist[i],
+                                                      )));
+                                        },
+                                        child: Card(
+                                            child: Row(
+                                          children: <Widget>[
+                                            Container(
+                                              width: 120,
+                                              height: 100,
+                                              child: Image.network(
+                                                  closebusinesses[i]['Logo']),
+                                            ),
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.all(10.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: <Widget>[
+                                                  Text(
+                                                    document['Name'],
+                                                    style: TextStyle(
+                                                      fontSize: 25,
+                                                      color: Colors.black,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      '${bus_dist[i].toStringAsFixed(2)} miles',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  SizedBox(
+                                                    height: 3,
+                                                  ),
+                                                  Container(
+                                                    width: 200,
+                                                    child: Text(
+                                                      document['Description'],
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: Colors.grey[500],
+                                                      ),
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            )
+                                          ],
+                                        )),
+                                      );
                                   }
                                 }
                               }).toList());
                             } else
-                              return new ListView(
-                                  children: snapshot.data.docs
-                                      .map((DocumentSnapshot document) {
-                                for (int i = 0; i < businesses.length; ++i) {
-                                  if (document['Name'] ==
-                                      businesses[i]['Name']) {
-                                    return new GestureDetector(
-                                      onTap: () {
-                                        userSearches(searchString);
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    businesspage(
-                                                        business:
-                                                            businesses[i])));
-                                      },
-                                      child: Card(
-                                          child: Row(
-                                        children: <Widget>[
-                                          Container(
-                                            width: 100,
-                                            height: 100,
-                                            //child:
-                                            //Image.asset('ecofriendly.png'),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(10.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: <Widget>[
-                                                Text(
-                                                  document['Name'],
-                                                  style: TextStyle(
-                                                    fontSize: 25,
-                                                    color: Colors.black,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                SizedBox(
-                                                  height: 10,
-                                                ),
-                                                Container(
-                                                  width: 200,
-                                                  child: Text(
-                                                    document['Description'],
-                                                    style: TextStyle(
-                                                      fontSize: 15,
-                                                      color: Colors.grey[500],
-                                                    ),
-                                                  ),
-                                                )
-                                              ],
-                                            ),
-                                          )
-                                        ],
-                                      )),
-                                    );
-                                  }
-                                }
-                              }).toList());
+                              return Text(
+                                  'No close businesses, change filter distance');
                         }
                       },
                     ),
@@ -270,19 +869,28 @@ class _SearchPageState extends State<SearchPage> {
             )
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          tooltip: 'Increment',
-          child: Icon(Icons.map),
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => GMap()),
+        floatingActionButton: Container(
+          height: MediaQuery.of(context).size.width * 0.125,
+          width: MediaQuery.of(context).size.width * 0.125,
+          child: FloatingActionButton(
+            backgroundColor: Colors.pinkAccent,
+            tooltip: 'Increment',
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16.0))),
+            child: Icon(Icons.map),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => GMap()),
+            ),
           ),
         ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endTop,
+        floatingActionButtonLocation:
+            FloatingActionButtonLocation.miniEndDocked,
       );
   }
 
-  filterResults(dist) async {
+  filterResults(dist) {
+    print(businesses.length);
     for (int i = 0; i < businesses.length; ++i) {
       double howfar = Geolocator.distanceBetween(
           currentLocation.latitude,
@@ -290,12 +898,16 @@ class _SearchPageState extends State<SearchPage> {
           businesses[i]['Location'].latitude,
           businesses[i]['Location'].longitude);
       double howfarmiles = howfar / 1609;
+      print(howfarmiles);
       if (howfarmiles < double.parse(dist)) {
         closebusinesses.add(businesses[i]);
+        bus_dist.add(howfarmiles);
       }
     }
-    print(closebusinesses);
-    loading = false;
+    print('Image' + '1');
+    setState(() {
+      loading = false;
+    });
   }
 
   Future<bool> getDist() async {
@@ -317,6 +929,12 @@ class _SearchPageState extends State<SearchPage> {
               TextButton(
                 child: Text('OK'),
                 onPressed: () {
+                  setState(() {
+                    loading = true;
+                    closebusinesses.clear();
+                  });
+                  reloadMainPageState();
+
                   filterResults(filterdist);
                   Navigator.of(context).pop();
                 },

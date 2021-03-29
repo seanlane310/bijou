@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 Future<void> userSearches(String searchString) async {
-  // FirebaseAuth auth = FirebaseAuth.instance;
-  // String uid = auth.currentUser.uid.toString();
-  //CollectionReference users = FirebaseFirestore.instance.collection('Users');
-  //CollectionReference users = FirebaseFirestore.instance.collection('Users').where('UserID', isEqualTo: uid);
-  CollectionReference users = FirebaseFirestore.instance
-      .collection('Users')
-      .where('Display Name', isEqualTo: 'Shaq');
-  users.add({'SearchHist': searchString});
-  print('Worked?');
+  if (searchString != null) {
+    FirebaseDatabase.instance
+        .reference()
+        .child(
+            'Customers/1234567890/Searches/') //the numbers need to be user email when working
+        .update({searchString: 'true'});
+    print('Worked?');
+  }
   return;
 }
