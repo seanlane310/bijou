@@ -179,7 +179,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -282,7 +282,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -377,7 +377,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -471,7 +471,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -564,7 +564,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -644,7 +644,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -726,7 +726,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:
@@ -807,7 +807,7 @@ class _SearchPageState extends State<SearchPage> {
                                               width: 120,
                                               height: 100,
                                               child: Image.network(
-                                                  closebusinesses[i]['Logo']),
+                                                  closebusinesses[i]['Image']),
                                             ),
                                             Padding(
                                               padding:

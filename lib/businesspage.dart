@@ -35,7 +35,7 @@ class _businesspageState extends State<businesspage> {
                 width: double.infinity,
                 height: 175,
                 child: Image(
-                  image: NetworkImage(business['Logo']),
+                  image: NetworkImage(business['Image']),
                   fit: BoxFit.fill,
                 ),
               ),
