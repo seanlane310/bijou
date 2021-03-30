@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/material/outline_button.dart';
@@ -12,6 +13,10 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart'; // For File Upload To Firestore
 import 'package:image_picker/image_picker.dart'; // For Image Picker
 import 'package:path/path.dart' as Path;
+
+class GlobalVariables {
+  String _userFirestoreDocumentID = "";
+}
 
 class SignUp extends StatelessWidget {
   SignUp({Key key}) : super(key: key);
@@ -108,7 +113,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
   String _city = "";
   String _state = "";
   String _zip = "";
-  String _businessDocumentID = "";
+  String _businessFirestoreDocumentID = "";
   double _long, _lat;
   bool _blackOwned = false;
   bool _womanOwned = false;
@@ -276,6 +281,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                               "Womanowned": _womanOwned,
                               "Ecofriendly": _sustainable,
                             }).then((value) {
+                              _businessFirestoreDocumentID = value.id;
                               firestoreInstance
                                   .collection("BusinessesTest")
                                   .doc(value.id)
@@ -283,15 +289,15 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                                 "iD": value.id,
                               }, SetOptions(merge: true)).then((_) {
                                 print("success!");
-                                _businessDocumentID = value.id;
                               });
                             });
 
                             //Add User Information
                             firestoreInstance.collection("Users").add({
-                              "Business ID": _businessDocumentID,
+                              "Business ID": _businessFirestoreDocumentID,
                               "Search History": [],
                               "Email": _email,
+                              "Type": "Business"
                             }).then((value) {
                               firestoreInstance
                                   .collection("Users")
@@ -303,10 +309,13 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                               });
                             });
 
-                            //Will need to create a business doc in firebase for them
-
                             //Return to the discover page
-                            //Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomeScreen()))
+                            Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        BusinessPhotoUploadScreen(
+                                            businessFirestoreDocumentID:
+                                                _businessFirestoreDocumentID)));
                           })
                     ],
                   )
@@ -330,6 +339,7 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
   //Variable Declaration
   String _productName = "";
   final firestoreInstance = FirebaseFirestore.instance;
+  List<String> _keys;
 
   //Widgets
   @override
@@ -376,9 +386,11 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
                       ),
                       child: new Text("Enter"),
                       onPressed: () {
-                        firestoreInstance
-                            .collection("Products")
-                            .add({"Name": _productName, "Keys": []}).then(
+                        firestoreInstance.collection("Products").add({
+                          "Name": _productName,
+                          "Type": "Product",
+                          "Keys": [],
+                        }).then(
                           (value) {
                             firestoreInstance
                                 .collection("Products")
@@ -400,7 +412,7 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          BusinessPhotoUploadScreen()));
+                                          Nav())); //Literally fix this
                             });
                       })
                 ],
@@ -412,14 +424,146 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
 }
 
 //UPLOADING PHOTOS FOR A BUSINESS
+
 class BusinessPhotoUploadScreen extends StatefulWidget {
+  String businessFirestoreDocumentID;
+
+  BusinessPhotoUploadScreen({@required this.businessFirestoreDocumentID});
+
   @override
   _BusinessPhotoUploadScreenState createState() =>
-      _BusinessPhotoUploadScreenState();
+      _BusinessPhotoUploadScreenState(businessFirestoreDocumentID);
 }
 
 class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
+  String businessFirestoreDocumentID;
+  //Variables
+  File _image; // Used only if you need a single picture
+  final firestoreInstance = FirebaseFirestore.instance;
+  GlobalVariables globals;
+  String _uploadedFileURL;
+
+//Functions
+  Future<void> saveImages(List<File> _images, DocumentReference ref) async {
+    _images.forEach((image) async {
+      String imageURL = await uploadFile(image);
+      ref.update({
+        "images": FieldValue.arrayUnion([imageURL])
+      });
+    });
+  }
+
+  Future<File> getImage(bool gallery) async {
+    //PickedFile pickedFile;
+    File pickedFile;
+    // Let user select photo from gallery
+    if (gallery) {
+      pickedFile = await ImagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+    }
+    // Otherwise open camera to get new photo
+    else {
+      pickedFile = await ImagePicker.pickImage(
+        source: ImageSource.camera,
+      );
+    }
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path); // Use if you only need a single picture
+      } else {
+        print('No image selected.');
+      }
+    });
+
+    return pickedFile;
+  }
+
+  Future<String> uploadFile(File _image) async {
+    Future<String> _url;
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref =
+        storage.ref().child("Users/" + businessFirestoreDocumentID + "/");
+    UploadTask uploadTask = ref.putFile(_image);
+    uploadTask.then((res) {
+      _url = res.ref.getDownloadURL();
+    });
+
+    //write URL of profile photo to business's document in firebase
+    firestoreInstance
+        .collection("BusinessTest")
+        .doc(businessFirestoreDocumentID)
+        .set({
+      "ImageCount": 1,
+      "ImageURL": _url,
+    });
+
+    return _url;
+  }
+
+  _BusinessPhotoUploadScreenState(businessFirestoreDocumentID);
+
   //Upload photos for a business page
+  //Widgets
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Firestore File Upload'),
+      ),
+      body: Center(
+        child: Column(
+          children: <Widget>[
+            Text('Selected Image'),
+            _image != null
+                ? Image.asset(
+                    _image.path,
+                    height: 150,
+                  )
+                : Container(height: 150),
+            _image == null
+                ? RaisedButton(
+                    child: Text('Choose Image'),
+                    onPressed: () async {
+                      _image = await getImage(true);
+                    },
+                    color: Colors.cyan,
+                  )
+                : Container(),
+            _image == null
+                ? RaisedButton(
+                    child: Text('Take Photo'),
+                    onPressed: () async {
+                      _image = await getImage(false);
+                    },
+                    color: Colors.cyan,
+                  )
+                : Container(),
+            _image != null
+                ? RaisedButton(
+                    child: Text('Upload File'),
+                    onPressed: () async {
+                      _uploadedFileURL = await uploadFile(_image);
+                    },
+                    color: Colors.cyan,
+                  )
+                : Container(),
+            /*
+            Text('Uploaded Image'),
+            _uploadedFileURL != null
+                ? Image.network(
+                    _uploadedFileURL,
+                    height: 150,
+                  )
+                : Container(),
+                */
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 //CUSTOMER SIGNUP PAGE
@@ -434,6 +578,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   String _password = "";
   final auth = FirebaseAuth.instance;
   final firestoreInstance = FirebaseFirestore.instance;
+  String _userFirestoreDocumentID;
 
   @override
   Widget build(BuildContext context) {
@@ -478,6 +623,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                               "Search History": [],
                               "Email": _email,
                             }).then((value) {
+                              _userFirestoreDocumentID = value.id;
                               firestoreInstance
                                   .collection("Users")
                                   .doc(value.id)
@@ -489,7 +635,11 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                             });
                             //Return to the discover page
                             Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(builder: (context) => Nav()));
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProfilePhotoUploadScreen(
+                                            userFirestoreDocumentID:
+                                                _userFirestoreDocumentID)));
                           })
                     ],
                   )
@@ -505,9 +655,13 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
 //PROFILE PICTURE UPLOAD
 class ProfilePhotoUploadScreen extends StatefulWidget {
+  String userFirestoreDocumentID;
+
+  ProfilePhotoUploadScreen({@required this.userFirestoreDocumentID});
+
   @override
   _ProfilePhotoUploadScreenState createState() =>
-      _ProfilePhotoUploadScreenState();
+      _ProfilePhotoUploadScreenState(userFirestoreDocumentID);
 }
 
 class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
@@ -515,60 +669,121 @@ class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
   //Variables
   File _image; // Used only if you need a single picture
   final firestoreInstance = FirebaseFirestore.instance;
+  GlobalVariables globals;
+  String _uploadedFileURL;
+  String userFirestoreDocumentID;
+
+  _ProfilePhotoUploadScreenState(this.userFirestoreDocumentID);
 
 //Functions
   Future<void> saveImages(List<File> _images, DocumentReference ref) async {
-  _images.forEach((image) async {
-    String imageURL = await uploadFile(image);
-    ref.update({"images": FieldValue.arrayUnion([imageURL])});
-  });
-}
+    _images.forEach((image) async {
+      String imageURL = await uploadFile(image);
+      ref.update({
+        "images": FieldValue.arrayUnion([imageURL])
+      });
+    });
+  }
 
-  Future getImage(bool gallery) async {
-    ImagePicker picker = ImagePicker();
-    PickedFile pickedFile;
+  Future<File> getImage(bool gallery) async {
+    //PickedFile pickedFile;
+    File pickedFile;
     // Let user select photo from gallery
-    if(gallery) {
-      pickedFile = await picker.getImage(
-          source: ImageSource.gallery,);
-    } 
+    if (gallery) {
+      pickedFile = await ImagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+    }
     // Otherwise open camera to get new photo
-    else{
-      pickedFile = await picker.getImage(
-          source: ImageSource.camera,);
+    else {
+      pickedFile = await ImagePicker.pickImage(
+        source: ImageSource.camera,
+      );
     }
 
     setState(() {
       if (pickedFile != null) {
-        _image.add(File(pickedFile.path));
-        //_image = File(pickedFile.path); // Use if you only need a single picture
+        _image = File(pickedFile.path); // Use if you only need a single picture
       } else {
         print('No image selected.');
       }
     });
+
+    return pickedFile;
   }
 
   Future<String> uploadFile(File _image) async {
-  Future<String> _url;
-  FirebaseStorage storage = FirebaseStorage.instance;
-  Reference ref = storage.ref().child("image1" + DateTime.now().toString());
-  UploadTask uploadTask = ref.putFile(_image);
-  uploadTask.then((res) {
-   _url = res.ref.getDownloadURL();
-  });
-  return _url;
-}
+    Future<String> _url;
+    FirebaseStorage storage = FirebaseStorage.instance;
+    Reference ref = storage
+        .ref()
+        .child("Users/" + userFirestoreDocumentID + "/profileImage");
+    UploadTask uploadTask = ref.putFile(_image);
+    uploadTask.then((res) {
+      _url = res.ref.getDownloadURL();
+    });
+    return _url;
 
-  
-DocumentReference sightingRef = Firebase.instance.collection(“sightings”).doc();
-await saveImages(_images,sightingRef);
-  
-
+    //write URL of profile photo to user's document in firebase
+  }
 
 //Widgets
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Firestore File Upload'),
+      ),
+      body: Center(
+        child: Column(
+          children: <Widget>[
+            Text('Selected Image'),
+            _image != null
+                ? Image.asset(
+                    _image.path,
+                    height: 150,
+                  )
+                : Container(height: 150),
+            _image == null
+                ? RaisedButton(
+                    child: Text('Choose Image'),
+                    onPressed: () async {
+                      _image = await getImage(true);
+                    },
+                    color: Colors.cyan,
+                  )
+                : Container(),
+            _image == null
+                ? RaisedButton(
+                    child: Text('Take Photo'),
+                    onPressed: () async {
+                      _image = await getImage(false);
+                    },
+                    color: Colors.cyan,
+                  )
+                : Container(),
+            _image != null
+                ? RaisedButton(
+                    child: Text('Upload File'),
+                    onPressed: () async {
+                      _uploadedFileURL = await uploadFile(_image);
+                    },
+                    color: Colors.cyan,
+                  )
+                : Container(),
+            /*
+            Text('Uploaded Image'),
+            _uploadedFileURL != null
+                ? Image.network(
+                    _uploadedFileURL,
+                    height: 150,
+                  )
+                : Container(),
+                */
+          ],
+        ),
+      ),
+    );
+  }
 }
-
-
-
-
