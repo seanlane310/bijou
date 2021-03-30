@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bijou/searchpage.dart';
+import 'package:bijou/discover.dart';
 import 'package:bijou/signinpage.dart';
 import 'package:bijou/authservice.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -15,7 +16,7 @@ class Nav extends StatefulWidget {
 class _NavState extends State<Nav> {
   int _selectedIndex = 0;
   List<Widget> _widgetOptions = <Widget>[
-    Text('Discover'),
+    MyHomePage(),
     SearchPage(),
     Text('Boards'),
     SignInPage(),
