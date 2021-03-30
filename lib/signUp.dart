@@ -13,6 +13,7 @@ import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart'; // For File Upload To Firestore
 import 'package:image_picker/image_picker.dart'; // For Image Picker
 import 'package:path/path.dart' as Path;
+import 'package:permission_handler/permission_handler.dart';
 
 class GlobalVariables {
   String _userFirestoreDocumentID = "";
@@ -277,6 +278,8 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                                 "Zip Code": _zip,
                                 "Location": LatLng(_lat, _long),
                               },
+                              "Tags": [],
+                              "SearchKey": [],
                               "Blackowned": _blackOwned,
                               "Womanowned": _womanOwned,
                               "Ecofriendly": _sustainable,
@@ -686,30 +689,33 @@ class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
   }
 
   Future<File> getImage(bool gallery) async {
-    //PickedFile pickedFile;
-    File pickedFile;
-    // Let user select photo from gallery
-    if (gallery) {
-      pickedFile = await ImagePicker.pickImage(
-        source: ImageSource.gallery,
-      );
-    }
-    // Otherwise open camera to get new photo
-    else {
-      pickedFile = await ImagePicker.pickImage(
-        source: ImageSource.camera,
-      );
-    }
-
-    setState(() {
-      if (pickedFile != null) {
-        _image = File(pickedFile.path); // Use if you only need a single picture
-      } else {
-        print('No image selected.');
+    if (ContextCompat.checkSelfPermission() == PERMISSION_GRANTED) {
+      //PickedFile pickedFile;
+      File pickedFile;
+      // Let user select photo from gallery
+      if (gallery) {
+        pickedFile = await ImagePicker.pickImage(
+          source: ImageSource.gallery,
+        );
       }
-    });
+      // Otherwise open camera to get new photo
+      else {
+        pickedFile = await ImagePicker.pickImage(
+          source: ImageSource.camera,
+        );
+      }
 
-    return pickedFile;
+      setState(() {
+        if (pickedFile != null) {
+          _image =
+              File(pickedFile.path); // Use if you only need a single picture
+        } else {
+          print('No image selected.');
+        }
+      });
+
+      return pickedFile;
+    }
   }
 
   Future<String> uploadFile(File _image) async {
