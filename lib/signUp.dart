@@ -14,6 +14,7 @@ import 'package:firebase_storage/firebase_storage.dart'; // For File Upload To F
 import 'package:image_picker/image_picker.dart'; // For Image Picker
 import 'package:path/path.dart' as Path;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:firebase_database/firebase_database.dart';
 
 class GlobalVariables {
   String _userFirestoreDocumentID = "";
@@ -296,6 +297,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                             });
 
                             //Add User Information
+                            /*
                             firestoreInstance.collection("Users").add({
                               "Business ID": _businessFirestoreDocumentID,
                               "Search History": [],
@@ -311,6 +313,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                                 print("success");
                               });
                             });
+                            */
 
                             //Return to the discover page
                             Navigator.of(context).pushReplacement(
@@ -521,8 +524,8 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
           children: <Widget>[
             Text('Selected Image'),
             _image != null
-                ? Image.asset(
-                    _image.path,
+                ? Image.file(
+                    _image,
                     height: 150,
                   )
                 : Container(height: 150),
@@ -615,34 +618,42 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                     children: [
                       RaisedButton(
                           child: Text("Sign Up"),
-                          onPressed: () {
+                          onPressed: () async {
                             //Authenticate the User
                             auth.createUserWithEmailAndPassword(
                                 email: _email, password: _password);
 
-                            //ADD USER TO FIREBASE
-                            firestoreInstance.collection("Users").add({
-                              "Business ID": "no",
-                              "Search History": [],
-                              "Email": _email,
-                            }).then((value) {
-                              _userFirestoreDocumentID = value.id;
-                              firestoreInstance
-                                  .collection("Users")
-                                  .doc(value.id)
-                                  .set({
-                                "iD": value.id,
-                              }, SetOptions(merge: true)).then((_) {
-                                print("success");
-                              });
-                            });
-                            //Return to the discover page
+                            await FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Boards')
+                                .set({'default': 'true'});
+
+                            await FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Searches')
+                                .set({'Bijou': 'true'});
+
+                            await FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Following')
+                                .set({'lnlIpcV2MYWyhIg7eGSMTnIiszX2': 'true'});
+
                             Navigator.of(context).pushReplacement(
                                 MaterialPageRoute(
                                     builder: (context) =>
                                         ProfilePhotoUploadScreen(
-                                            userFirestoreDocumentID:
-                                                _userFirestoreDocumentID)));
+                                          email: _email,
+                                          currUserId: auth.currentUser.uid,
+                                        )));
                           })
                     ],
                   )
@@ -658,77 +669,95 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
 
 //PROFILE PICTURE UPLOAD
 class ProfilePhotoUploadScreen extends StatefulWidget {
-  String userFirestoreDocumentID;
+  var email;
+  String currUserId;
 
-  ProfilePhotoUploadScreen({@required this.userFirestoreDocumentID});
+  ProfilePhotoUploadScreen(
+      {Key key, @required this.email, @required this.currUserId})
+      : super(key: key);
 
   @override
   _ProfilePhotoUploadScreenState createState() =>
-      _ProfilePhotoUploadScreenState(userFirestoreDocumentID);
+      _ProfilePhotoUploadScreenState(email, currUserId);
 }
 
 class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
   //Allow Users to upload a profile photo
   //Variables
   File _image; // Used only if you need a single picture
+  final picker = ImagePicker();
   final firestoreInstance = FirebaseFirestore.instance;
   GlobalVariables globals;
   String _uploadedFileURL;
-  String userFirestoreDocumentID;
+  var userFirestoreDocumentID;
+  var email;
+  var loading;
+  String currUserId;
 
-  _ProfilePhotoUploadScreenState(this.userFirestoreDocumentID);
+  _ProfilePhotoUploadScreenState(this.email, this.currUserId);
+
+  @override
+  void initState() {
+    super.initState();
+    setState(() {
+      loading = true;
+      print("User ID: " + currUserId);
+      loading = false;
+      //createDocument(email);
+    });
+  }
+
+/*
+  createDocument(email) {
+    DocumentReference ref =
+        FirebaseFirestore.instance.collection('Users').doc();
+    ref.set({
+      "Business ID": "no",
+      "Email": email,
+      "DocID": ref.id,
+    }).then((value) {
+      setState(() {
+        userFirestoreDocumentID = ref.id;
+        loading = false;
+      });
+    });
+  }
+  */
 
 //Functions
-  Future<void> saveImages(List<File> _images, DocumentReference ref) async {
-    _images.forEach((image) async {
-      String imageURL = await uploadFile(image);
-      ref.update({
-        "images": FieldValue.arrayUnion([imageURL])
-      });
+  // Future<void> saveImages(List<File> _images, DocumentReference ref) async {
+  //   _images.forEach((image) async {
+  //     String imageURL = await uploadFile(image, );
+  //     ref.update({
+  //       "images": FieldValue.arrayUnion([imageURL])
+  //     });
+  //   });
+  // }
+
+  Future getImage() async {
+    //PickedFile pickedFile;
+    final pickedFile = await ImagePicker.pickImage(source: ImageSource.camera);
+
+    setState(() {
+      if (pickedFile != null) {
+        _image = File(pickedFile.path); // Use if you only need a single picture
+      } else {
+        print('No image selected.');
+      }
     });
+
+    return pickedFile;
   }
 
-  Future<File> getImage(bool gallery) async {
-    if (ContextCompat.checkSelfPermission() == PERMISSION_GRANTED) {
-      //PickedFile pickedFile;
-      File pickedFile;
-      // Let user select photo from gallery
-      if (gallery) {
-        pickedFile = await ImagePicker.pickImage(
-          source: ImageSource.gallery,
-        );
-      }
-      // Otherwise open camera to get new photo
-      else {
-        pickedFile = await ImagePicker.pickImage(
-          source: ImageSource.camera,
-        );
-      }
-
-      setState(() {
-        if (pickedFile != null) {
-          _image =
-              File(pickedFile.path); // Use if you only need a single picture
-        } else {
-          print('No image selected.');
-        }
-      });
-
-      return pickedFile;
-    }
-  }
-
-  Future<String> uploadFile(File _image) async {
-    Future<String> _url;
+  // Future uploadFile(File _image, userDocID) async {
+  Future uploadFile(File _image) async {
     FirebaseStorage storage = FirebaseStorage.instance;
-    Reference ref = storage
-        .ref()
-        .child("Users/" + userFirestoreDocumentID + "/profileImage");
-    UploadTask uploadTask = ref.putFile(_image);
-    uploadTask.then((res) {
-      _url = res.ref.getDownloadURL();
-    });
-    return _url;
+    Reference imageRef =
+        storage.ref().child("Users/" + currUserId + "/profileImage");
+    UploadTask uploadTask = imageRef.putFile(_image);
+    var imageUrl = await (await uploadTask).ref.getDownloadURL();
+    var url = imageUrl.toString();
+    print(url);
 
     //write URL of profile photo to user's document in firebase
   }
@@ -737,59 +766,58 @@ class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Firestore File Upload'),
-      ),
-      body: Center(
-        child: Column(
-          children: <Widget>[
-            Text('Selected Image'),
-            _image != null
-                ? Image.asset(
-                    _image.path,
-                    height: 150,
-                  )
-                : Container(height: 150),
-            _image == null
-                ? RaisedButton(
-                    child: Text('Choose Image'),
-                    onPressed: () async {
-                      _image = await getImage(true);
-                    },
-                    color: Colors.cyan,
-                  )
-                : Container(),
-            _image == null
-                ? RaisedButton(
-                    child: Text('Take Photo'),
-                    onPressed: () async {
-                      _image = await getImage(false);
-                    },
-                    color: Colors.cyan,
-                  )
-                : Container(),
-            _image != null
-                ? RaisedButton(
-                    child: Text('Upload File'),
-                    onPressed: () async {
-                      _uploadedFileURL = await uploadFile(_image);
-                    },
-                    color: Colors.cyan,
-                  )
-                : Container(),
-            /*
-            Text('Uploaded Image'),
-            _uploadedFileURL != null
-                ? Image.network(
-                    _uploadedFileURL,
-                    height: 150,
-                  )
-                : Container(),
-                */
-          ],
+    if (loading)
+      return CircularProgressIndicator();
+    else
+      return Scaffold(
+        appBar: AppBar(
+          title: Text('Profile Photo'),
         ),
-      ),
-    );
+        body: Center(
+          child: Column(
+            children: <Widget>[
+              Text('Selected Image'),
+              _image != null
+                  ? Image.file(
+                      _image,
+                      height: 150,
+                    )
+                  : Container(height: 150),
+              _image == null
+                  ? RaisedButton(
+                      child: Text('Choose Image'),
+                      onPressed: () async {
+                        _image = await getImage();
+                      },
+                      color: Colors.pinkAccent,
+                    )
+                  : Container(),
+              _image == null
+                  ? RaisedButton(
+                      child: Text('Take Photo'),
+                      onPressed: () async {
+                        _image = await getImage();
+                      },
+                      color: Colors.pinkAccent,
+                    )
+                  : Container(),
+              _image != null
+                  ? RaisedButton(
+                      child: Text('Upload File'),
+                      onPressed: () async {
+                        print(userFirestoreDocumentID);
+                        // uploadFile(_image, userFirestoreDocumentID);
+                        uploadFile(_image);
+
+                        Navigator.push(context,
+                            MaterialPageRoute(builder: (context) => Nav()));
+                      },
+                      color: Colors.pinkAccent,
+                    )
+                  : Container(),
+            ],
+          ),
+        ),
+      );
   }
 }
