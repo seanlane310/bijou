@@ -49,7 +49,6 @@ class _SearchPageState extends State<SearchPage> {
         for (int i = 0; i < docs.docs.length; ++i) {
           businesses.add(docs.docs[i].data());
         }
-        print(businesses);
         filterResults('10');
       }
     });
@@ -360,7 +359,6 @@ class _SearchPageState extends State<SearchPage> {
                                       return new GestureDetector(
                                         onTap: () {
                                           userSearches(searchString);
-                                          print('did it work');
                                           Navigator.of(context).push(
                                               MaterialPageRoute(
                                                   builder: (context) =>
@@ -788,8 +786,6 @@ class _SearchPageState extends State<SearchPage> {
                                     } else
                                       return new GestureDetector(
                                         onTap: () {
-                                          print(
-                                              closebusinesses[i]['ImageCount']);
                                           userSearches(searchString);
                                           Navigator.of(context).push(
                                               MaterialPageRoute(
@@ -890,7 +886,6 @@ class _SearchPageState extends State<SearchPage> {
   }
 
   filterResults(dist) {
-    print(businesses.length);
     for (int i = 0; i < businesses.length; ++i) {
       double howfar = Geolocator.distanceBetween(
           currentLocation.latitude,
@@ -898,13 +893,11 @@ class _SearchPageState extends State<SearchPage> {
           businesses[i]['Location'].latitude,
           businesses[i]['Location'].longitude);
       double howfarmiles = howfar / 1609;
-      print(howfarmiles);
       if (howfarmiles < double.parse(dist)) {
         closebusinesses.add(businesses[i]);
         bus_dist.add(howfarmiles);
       }
     }
-    print('Image' + '1');
     setState(() {
       loading = false;
     });

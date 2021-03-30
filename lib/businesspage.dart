@@ -48,22 +48,22 @@ class _businesspageState extends State<businesspage> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black),
                   )),
-              Divider(
-                color: Colors.black,
-                height: 15,
-              ),
-              SizedBox(
-                height: 5,
-              ),
+              // Divider(
+              //   color: Colors.black,
+              //   height: 15,
+              // ),
+              // SizedBox(
+              //   height: 5,
+              // ),
               Container(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  '${bus_dis.toStringAsFixed(2)} Miles Away',
+                  '${bus_dis.toStringAsFixed(2)} mi',
                   style: TextStyle(fontSize: 20, color: Colors.black),
                 ),
               ),
               SizedBox(
-                height: 10,
+                height: 5,
               ),
               Divider(
                 color: Colors.black,
@@ -76,13 +76,14 @@ class _businesspageState extends State<businesspage> {
                   style: TextStyle(fontSize: 20, color: Colors.black),
                 ),
               ),
+              SizedBox(
+                height: 5,
+              ),
               Divider(
                 color: Colors.black,
                 height: 10,
               ),
-              SizedBox(
-                height: 10,
-              ),
+
               Container(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -90,13 +91,14 @@ class _businesspageState extends State<businesspage> {
                   style: TextStyle(fontSize: 20, color: Colors.black),
                 ),
               ),
+              SizedBox(
+                height: 5,
+              ),
               Divider(
                 color: Colors.black,
                 height: 10,
               ),
-              SizedBox(
-                height: 10,
-              ),
+
               Container(
                 alignment: Alignment.centerLeft,
                 child: new InkWell(

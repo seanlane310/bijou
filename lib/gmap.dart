@@ -47,7 +47,6 @@ class _GMapState extends State<GMap> {
   }
 
   initMarker(business) async {
-    print(business['Location'].latitude);
     _markers.add(Marker(
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose),
         markerId: MarkerId(marker_id_count.toString()),
