@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:bijou/businesspage.dart';
 
 class GMap extends StatefulWidget {
-  GMap({Key key}) : super(key: key);
+  var bus_dis;
+
+  GMap({Key key, @required this.bus_dis}) : super(key: key);
 
   @override
-  _GMapState createState() => _GMapState();
+  _GMapState createState() => _GMapState(bus_dis);
 }
 
 class _GMapState extends State<GMap> {
@@ -17,6 +20,8 @@ class _GMapState extends State<GMap> {
   var currentLocation;
   var businesses = [];
   int marker_id_count = 0;
+  var bus_dis;
+  _GMapState(this.bus_dis);
 
   Set<Marker> _markers = HashSet<Marker>();
   GoogleMapController _mapController;
@@ -34,34 +39,37 @@ class _GMapState extends State<GMap> {
   }
 
   populateBusinesses() async {
-    //print('is it working populate');
     businesses = [];
     FirebaseFirestore.instance.collection('Businesses').get().then((docs) {
       if (docs.docs.isNotEmpty) {
         for (int i = 0; i < docs.docs.length; ++i) {
           businesses.add(docs.docs[i].data());
-          initMarker(docs.docs[i].data());
+          initMarker(docs.docs[i].data(), bus_dis[i]);
         }
       }
     });
   }
 
-  initMarker(business) async {
+  initMarker(business, dist) async {
     _markers.add(Marker(
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose),
         markerId: MarkerId(marker_id_count.toString()),
         position: LatLng(
             business['Location'].latitude, business['Location'].longitude),
         infoWindow: InfoWindow(
-          title: business['Name'],
-          snippet: business['Description'],
-        )));
+            title: business['Name'],
+            snippet: business['Description'],
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => businesspage(
+                        business: business,
+                        bus_dis: dist,
+                      )));
+            })));
     ++marker_id_count;
   }
 
   void _onMapCreated(GoogleMapController controller) {
-    //print('is it working');
-    //this is to check if the map is ready to be used
     _mapController = controller;
     controller.setMapStyle(Utils.mapStyle);
     setState(() {

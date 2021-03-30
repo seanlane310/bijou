@@ -1,3 +1,5 @@
+//this is just a copy of businesspage we can work off of
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -5,20 +7,17 @@ import 'package:url_launcher/url_launcher.dart';
 
 class businesspage extends StatefulWidget {
   var business;
-  var bus_dis;
 
-  businesspage({Key key, @required this.business, @required this.bus_dis})
-      : super(key: key);
+  businesspage({Key key, @required this.business}) : super(key: key);
 
   @override
-  _businesspageState createState() => _businesspageState(business, bus_dis);
+  _businesspageState createState() => _businesspageState(business);
 }
 
 class _businesspageState extends State<businesspage> {
   var business;
-  var bus_dis;
   var count;
-  _businesspageState(this.business, this.bus_dis);
+  _businesspageState(this.business);
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,13 +47,6 @@ class _businesspageState extends State<businesspage> {
                         fontWeight: FontWeight.bold,
                         color: Colors.black),
                   )),
-              Container(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${bus_dis.toStringAsFixed(2)} mi',
-                  style: TextStyle(fontSize: 20, color: Colors.black),
-                ),
-              ),
               SizedBox(
                 height: 5,
               ),

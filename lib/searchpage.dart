@@ -22,6 +22,7 @@ class _SearchPageState extends State<SearchPage> {
   var businesses = [];
   var closebusinesses = [];
   var bus_dist = [];
+  var allbus_dist = [];
   var filterdist = '10';
   bool loading = true;
 
@@ -33,7 +34,6 @@ class _SearchPageState extends State<SearchPage> {
 
   @override
   void initState() {
-    //reloadMainPageState();
     super.initState();
     Geolocator.getCurrentPosition().then((currloc) {
       setState(() {
@@ -876,7 +876,10 @@ class _SearchPageState extends State<SearchPage> {
             child: Icon(Icons.map),
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => GMap()),
+              MaterialPageRoute(
+                  builder: (context) => GMap(
+                        bus_dis: allbus_dist,
+                      )),
             ),
           ),
         ),
@@ -893,6 +896,7 @@ class _SearchPageState extends State<SearchPage> {
           businesses[i]['Location'].latitude,
           businesses[i]['Location'].longitude);
       double howfarmiles = howfar / 1609;
+      allbus_dist.add(howfarmiles);
       if (howfarmiles < double.parse(dist)) {
         closebusinesses.add(businesses[i]);
         bus_dist.add(howfarmiles);
