@@ -30,10 +30,11 @@ dependencies:
   firebase_core: ^1.0.1
   geolocator: '7.0.1'
   google_maps_flutter: '2.0.1'
-  firebase_storage: ^8.0.0
+  firebase_storage: ^8.0.1
   provider: ^5.0.0
   google_sign_in: ^4.5.3
   multi_select_flutter: ^2.1.0
+  image_picker: ^0.6.0+17    
 
 dev_dependencies:
   flutter_test:
