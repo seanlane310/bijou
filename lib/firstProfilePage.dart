@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/src/material/outline_button.dart';
 import 'package:bijou/signIn.dart';
 import 'package:bijou/signUp.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfilePage extends StatefulWidget {
   ProfilePage({Key key}) : super(key: key);
@@ -57,6 +58,16 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () {
                 Navigator.push(
                     context, MaterialPageRoute(builder: (context) => SignUp()));
+              },
+            ),
+            OutlineButton(
+              borderSide: BorderSide(
+                color: Colors.purple,
+              ),
+              child: new Text("SignOut"),
+              onPressed: () async {
+                await FirebaseAuth.instance.signOut();
+                print('signed out');
               },
             ),
           ],
