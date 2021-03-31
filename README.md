@@ -1,16 +1,12 @@
 # bijou
 
-A new Flutter project.
+Google Solution Project Submission
 
-## Getting Started
+## How to Run the Code
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+1. Clone the Master Branch
+2. Open In VScode
+3. Get packages by either running the command _flutter pub get_ or by pressing "Get Packages" when prompted in VScode
+4. Create an Android emulator, if you do not have one set up
+5. In the lower right hand side of VScode, make sure a device is running. If it says _No Device_ click on it and start a device
+6. Once a device is started, run the command: _flutter run_ in a terminal that is open in the project folder
