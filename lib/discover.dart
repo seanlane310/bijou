@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:async/async.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bijou/productpage.dart';
+import 'package:bijou/businesspagedisc.dart';
 import 'signIn.dart';
 
 //when connect auth:
@@ -116,9 +117,16 @@ class _MyHomePageState extends State<MyHomePage> {
                   buttonHeight: 10,
                   children: [
                     TextButton(
-                      onPressed: () {/*
-                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => productpage( product: data)));   
-                      */},
+                      onPressed: () {
+                        if (data['type'] == 'business')
+                        {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => businesspagedisc( business: data)));   
+                        }
+                        else if (data['type'] == 'product')
+                        {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => productpage( product: data))); 
+                        }
+                      },
                       child: Text(data['Name'],style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                     ),
 
