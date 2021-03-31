@@ -11,26 +11,32 @@ import 'package:firebase_auth/firebase_auth.dart';
 //final FirebaseUser user = await _firebaseAuth.currentUser();
 //return await FirebaseDatabase.instance.reference().child('user').equalTo(user.uid);
 
-class Boards extends StatefulWidget {
-  Boards({Key key, this.title}) : super(key: key);
-
+class Follow extends StatefulWidget {
+  Follow({Key key, this.title, @required this.followID, @required this.followName}) : super(key: key);
+  var followID;
+  var followName;
   final String title;
 
+
   @override
-  _BoardsState createState() => _BoardsState();
+  _FollowState createState() => _FollowState(followID, followName);
 }
 
-class _BoardsState extends State<Boards> {
+class _FollowState extends State<Follow> {
   bool start = true;
   List<bool> _selections = List.generate(2, (int index) => !(index==1));
   List<String> dbResultSet;
   List<String> boards;
   List<String> products;
   List<String> businesses;
+  var userID;
   var numPins = [];
   int index = -1;
   bool loggedIn = false;
+  var followID;
+  var followName;
   
+_FollowState(this.followID, this.followName);
   //var tempSearchStore = [];
   var discoverStore = [];
   final AsyncMemoizer _memoizer = AsyncMemoizer();
@@ -74,10 +80,10 @@ class _BoardsState extends State<Boards> {
     {
       if (await FirebaseAuth.instance.currentUser != null) 
       {
-        var userID = FirebaseAuth.instance.currentUser.uid;
+        userID = FirebaseAuth.instance.currentUser.uid;
         loggedIn = true;
 
-        var ref0 = FirebaseDatabase.instance.reference().child('Customers/$userID/Boards/');
+        var ref0 = FirebaseDatabase.instance.reference().child('Customers/$followID/Boards/');
         print("IS THIS RUNNING?");
         await ref0.once().then((DataSnapshot snapshot) async 
         {
@@ -101,7 +107,7 @@ class _BoardsState extends State<Boards> {
             businesses = [];
           });
           
-          var ref = FirebaseDatabase.instance.reference().child('Customers/$userID/Boards/$curr_board/Product');
+          var ref = FirebaseDatabase.instance.reference().child('Customers/$followID/Boards/$curr_board/Product');
           await ref.once().then((DataSnapshot snapshot) async 
           {
             var prodTemp = snapshot.value.keys.cast<String>().toList();
@@ -114,7 +120,7 @@ class _BoardsState extends State<Boards> {
 
           print("PRODUCTS:"+ products.toString());
 
-          var ref1 = FirebaseDatabase.instance.reference().child('Customers/$userID/Boards/$curr_board/Business');
+          var ref1 = FirebaseDatabase.instance.reference().child('Customers/$followID/Boards/$curr_board/Business');
           await ref1.once().then((DataSnapshot snapshot) async 
           {
             print("RUNNING??");
@@ -174,7 +180,7 @@ class _BoardsState extends State<Boards> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Boards'),
+        title: Text('$followName'),
       ),
       body: ListView(children: <Widget>[
         Container(
@@ -182,7 +188,17 @@ class _BoardsState extends State<Boards> {
             margin: EdgeInsets.all(10),
             padding: EdgeInsets.all(20),
             child:
-              Text('Your Boards',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20))
+            Row(children: [
+              Text('Boards for $followName:',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+              OutlinedButton(
+                onPressed: () async {
+                  await FirebaseDatabase.instance.reference().child('Customers/$userID/Following').update({
+                    '$followID':'true'
+                  });
+                },
+                child: Text('Follow +', textAlign: TextAlign.left, style: TextStyle(decorationStyle: TextDecorationStyle.double,fontWeight: FontWeight.w300, fontSize: 20)),
+              )]
+            ,)
                           
         ),
       FutureBuilder(
@@ -221,11 +237,26 @@ class _BoardsState extends State<Boards> {
                     child:
                     ListView.builder(
                       shrinkWrap: true,
+                      //itemCount: 10,
                       scrollDirection: Axis.horizontal,
                       itemCount: numPins[ind],
                       itemBuilder: (context, int i) {
+                        print("RUNNING?!:"+ i.toString());
+                        print("NUMPINS:"+ numPins[ind].toString());
+                        //print(discoverStore.sublist(index, (index+numPins[ind]-1) ).toString());
+                        //setState(() => {
+                        //(discoverStore.sublist(index, (index+numPins[ind]-1) )).map((element) {
+                          //print(element.toString());
+                          // index needs to be incremented
                           index = index + 1; 
-                            return 
+                          print("CURR_INDEX:"+ index.toString());
+                          //print("CURR_BOARD:"+ boards[ind]);
+                          //return List.generate(numPins[ind], (index) {
+                            return /*new Container(
+                              alignment: Alignment.center,
+                              margin: EdgeInsets.all(2),
+                              padding: EdgeInsets.all(2),
+                                child:*/
                                 new Card(
                                 clipBehavior: Clip.antiAlias,
                                 child: new Column(

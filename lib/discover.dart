@@ -8,6 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:bijou/productpage.dart';
 import 'package:bijou/businesspagedisc.dart';
 import 'signIn.dart';
+import 'package:bijou/followpages.dart';
 
 //when connect auth:
 //final const user = await _firebaseAuth.currentUser();
@@ -621,6 +622,7 @@ Widget _followingBar()
       scrollDirection: Axis.horizontal,
       itemCount: allUsersName.length,
       itemBuilder: (context, int i) {
+        
             print(i); 
             return 
                 new Card(
@@ -628,7 +630,9 @@ Widget _followingBar()
                 child: new Row(
                   children: <Widget>[
                     new OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.of(context).push(MaterialPageRoute(builder: (context) => Follow ( followID: allUsers[i], followName: allUsersName[i]['Name'])));   
+                      },
                       child:
                       new ClipRRect(
                         borderRadius: BorderRadius.only(
