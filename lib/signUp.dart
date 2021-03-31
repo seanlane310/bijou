@@ -124,6 +124,15 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
   final firestoreInstance = FirebaseFirestore.instance;
 
   @override
+  void initState() {
+    super.initState();
+    setState(() {
+      firestoreInstance.collection("BusinessesTest").doc().set({
+        "useful": "no",
+      });
+    });
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Sign Up")),
@@ -293,15 +302,23 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                               print("WRITTEN");
                             });
 
-                            await FirebaseDatabase.instance
+                            FirebaseDatabase.instance
                                 .reference()
                                 .child('Customers' +
                                     '/' +
                                     auth.currentUser.uid +
-                                    '/Boards')
-                                .set({'default': 'true'});
+                                    '/Boards/Bijou Favorites/Business')
+                                .set({'Jre5332CuksbCc6gBYYW': 'true'});
 
-                            await FirebaseDatabase.instance
+                            FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Boards/Bijou Favorites/Products')
+                                .set({'WtbPhlMYCSvga34e9Xlr': 'true'});
+
+                            FirebaseDatabase.instance
                                 .reference()
                                 .child('Customers' +
                                     '/' +
@@ -309,7 +326,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                                     '/Searches')
                                 .set({'Bijou': 'true'});
 
-                            await FirebaseDatabase.instance
+                            FirebaseDatabase.instance
                                 .reference()
                                 .child('Customers' +
                                     '/' +
@@ -322,8 +339,10 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                                 MaterialPageRoute(
                                     builder: (context) =>
                                         BusinessPhotoUploadScreen(
-                                            businessFirestoreDocumentID:
-                                                _businessFirestoreDocumentID)));
+                                          businessFirestoreDocumentID:
+                                              auth.currentUser.uid,
+                                          currbizName: _bizName,
+                                        )));
                           })
                     ],
                   )
@@ -339,8 +358,12 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
 
 //Logging Products for a Business Registering
 class LogProductsScreen extends StatefulWidget {
+  String currbizName;
+
+  LogProductsScreen({@required this.currbizName});
+
   @override
-  _LogProductsScreenState createState() => _LogProductsScreenState();
+  _LogProductsScreenState createState() => _LogProductsScreenState(currbizName);
 }
 
 class _LogProductsScreenState extends State<LogProductsScreen> {
@@ -348,6 +371,9 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
   String _productName = "";
   final firestoreInstance = FirebaseFirestore.instance;
   List<String> _keys;
+  String currbizName;
+
+  _LogProductsScreenState(this.currbizName);
 
   //Widgets
   @override
@@ -394,10 +420,13 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
                       ),
                       child: new Text("Enter"),
                       onPressed: () {
+                        print(currbizName);
+
                         firestoreInstance.collection("Products").add({
                           "Name": _productName,
                           "Type": "Product",
                           "Keys": [],
+                          "Business Name": currbizName,
                         }).then(
                           (value) {
                             firestoreInstance
@@ -435,12 +464,14 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
 
 class BusinessPhotoUploadScreen extends StatefulWidget {
   String businessFirestoreDocumentID;
+  String currbizName;
 
-  BusinessPhotoUploadScreen({@required this.businessFirestoreDocumentID});
+  BusinessPhotoUploadScreen(
+      {@required this.businessFirestoreDocumentID, @required this.currbizName});
 
   @override
   _BusinessPhotoUploadScreenState createState() =>
-      _BusinessPhotoUploadScreenState(businessFirestoreDocumentID);
+      _BusinessPhotoUploadScreenState(businessFirestoreDocumentID, currbizName);
 }
 
 class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
@@ -450,8 +481,12 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
   final firestoreInstance = FirebaseFirestore.instance;
   GlobalVariables globals;
   String _uploadedFileURL;
+  String currbizName;
 
 //Functions
+  _BusinessPhotoUploadScreenState(
+      this.businessFirestoreDocumentID, this.currbizName);
+
   Future<void> saveImages(List<File> _images, DocumentReference ref) async {
     _images.forEach((image) async {
       String imageURL = await uploadFile(image);
@@ -512,8 +547,6 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
     return url;
   }
 
-  _BusinessPhotoUploadScreenState(businessFirestoreDocumentID);
-
   //Upload photos for a business page
   //Widgets
 
@@ -557,10 +590,14 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
                     onPressed: () async {
                       uploadFile(_image);
 
+                      print(currbizName);
+
                       Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => LogProductsScreen()));
+                              builder: (context) => LogProductsScreen(
+                                    currbizName: currbizName,
+                                  )));
                     },
                     color: Colors.cyan,
                   )
@@ -597,6 +634,15 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   String _userFirestoreDocumentID;
 
   @override
+  void initState() {
+    super.initState();
+    setState(() {
+      firestoreInstance.collection("BusinessesTest").doc().set({
+        "useful": "no",
+      });
+    });
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Sign Up")),
