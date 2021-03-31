@@ -4,6 +4,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:async/async.dart';
+import 'package:bijou/productpage.dart';
+import 'package:bijou/businesspagedisc.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 //when connect auth:
 //final FirebaseUser user = await _firebaseAuth.currentUser();
 //return await FirebaseDatabase.instance.reference().child('user').equalTo(user.uid);
@@ -26,6 +29,7 @@ class _BoardsState extends State<Boards> {
   List<String> businesses;
   var numPins = [];
   int index = -1;
+  bool loggedIn = false;
   
   //var tempSearchStore = [];
   var discoverStore = [];
@@ -68,7 +72,12 @@ class _BoardsState extends State<Boards> {
   {
     return this._memoizer.runOnce(() async 
     {
-        var ref0 = FirebaseDatabase.instance.reference().child('Customers/1234567890/Boards/');
+      if (await FirebaseAuth.instance.currentUser != null) 
+      {
+        var userID = FirebaseAuth.instance.currentUser.uid;
+        loggedIn = true;
+
+        var ref0 = FirebaseDatabase.instance.reference().child('Customers/$userID/Boards/');
         print("IS THIS RUNNING?");
         await ref0.once().then((DataSnapshot snapshot) async 
         {
@@ -92,7 +101,7 @@ class _BoardsState extends State<Boards> {
             businesses = [];
           });
           
-          var ref = FirebaseDatabase.instance.reference().child('Customers/1234567890/Boards/$curr_board/Product');
+          var ref = FirebaseDatabase.instance.reference().child('Customers/$userID/Boards/$curr_board/Product');
           await ref.once().then((DataSnapshot snapshot) async 
           {
             var prodTemp = snapshot.value.keys.cast<String>().toList();
@@ -105,7 +114,7 @@ class _BoardsState extends State<Boards> {
 
           print("PRODUCTS:"+ products.toString());
 
-          var ref1 = FirebaseDatabase.instance.reference().child('Customers/1234567890/Boards/$curr_board/Business');
+          var ref1 = FirebaseDatabase.instance.reference().child('Customers/$userID/Boards/$curr_board/Business');
           await ref1.once().then((DataSnapshot snapshot) async 
           {
             print("RUNNING??");
@@ -157,6 +166,7 @@ class _BoardsState extends State<Boards> {
 
 
         }
+      }
     });
   }
 
@@ -236,7 +246,16 @@ class _BoardsState extends State<Boards> {
                                 child: new Column(
                                   children: <Widget>[
                                     new OutlinedButton(
-                                      onPressed: () {},
+                                      onPressed: () {
+                                        if (discoverStore[index]['type'] == 'business')
+                                        {
+                                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => businesspagedisc( business: discoverStore[index])));   
+                                        }
+                                        else if (discoverStore[index]['type'] == 'product')
+                                        {
+                                          Navigator.of(context).push(MaterialPageRoute(builder: (context) => productpage( product: discoverStore[index]))); 
+                                        }
+                                      },
                                       child:
                                       new ClipRRect(
                                         borderRadius: BorderRadius.only(
