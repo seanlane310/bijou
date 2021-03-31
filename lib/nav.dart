@@ -8,6 +8,7 @@ import 'package:bijou/authservice.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:bijou/firstProfilePage.dart';
 
 class Nav extends StatefulWidget {
   @override
@@ -20,7 +21,7 @@ class _NavState extends State<Nav> {
     MyHomePage(),
     SearchPage(),
     Boards(),
-    SignInPage(),
+    ProfilePage(),
   ];
 
   void _onItemTap(int index) {
