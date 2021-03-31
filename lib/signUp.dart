@@ -216,6 +216,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                       });
                     },
                   ),
+                  /*
                   TextField(
                     decoration:
                         InputDecoration(hintText: "GeoLocation Longitude"),
@@ -236,6 +237,7 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                       });
                     },
                   ),
+                  */
                   Text("Select All That Apply"),
                   //Contains the Buttons for all the options of badges
                   Row(
@@ -261,13 +263,16 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                     children: [
                       RaisedButton(
                           child: Text("Sign Up"),
-                          onPressed: () {
+                          onPressed: () async {
                             auth.createUserWithEmailAndPassword(
                                 email: _email, password: _password);
 
                             //Add Business Information
                             //var firebaseUser = FirebaseAuth.instance.currentUser;
-                            firestoreInstance.collection("BusinessesTest").add({
+                            firestoreInstance
+                                .collection("BusinessesTest")
+                                .doc(auth.currentUser.uid)
+                                .set({
                               "Description": _description,
                               "Name": _bizName,
                               "Website": _website,
@@ -277,43 +282,40 @@ class _BusinessLoginScreenState extends State<BusinessLoginScreen> {
                                 "City": _city,
                                 "State": _state,
                                 "Zip Code": _zip,
-                                "Location": LatLng(_lat, _long),
                               },
                               "Tags": [],
                               "SearchKey": [],
                               "Blackowned": _blackOwned,
                               "Womanowned": _womanOwned,
                               "Ecofriendly": _sustainable,
+                              "iD": auth.currentUser.uid,
                             }).then((value) {
-                              _businessFirestoreDocumentID = value.id;
-                              firestoreInstance
-                                  .collection("BusinessesTest")
-                                  .doc(value.id)
-                                  .set({
-                                "iD": value.id,
-                              }, SetOptions(merge: true)).then((_) {
-                                print("success!");
-                              });
+                              print("WRITTEN");
                             });
 
-                            //Add User Information
-                            /*
-                            firestoreInstance.collection("Users").add({
-                              "Business ID": _businessFirestoreDocumentID,
-                              "Search History": [],
-                              "Email": _email,
-                              "Type": "Business"
-                            }).then((value) {
-                              firestoreInstance
-                                  .collection("Users")
-                                  .doc(value.id)
-                                  .set({
-                                "iD": value.id,
-                              }, SetOptions(merge: true)).then((_) {
-                                print("success");
-                              });
-                            });
-                            */
+                            await FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Boards')
+                                .set({'default': 'true'});
+
+                            await FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Searches')
+                                .set({'Bijou': 'true'});
+
+                            await FirebaseDatabase.instance
+                                .reference()
+                                .child('Customers' +
+                                    '/' +
+                                    auth.currentUser.uid +
+                                    '/Following')
+                                .set({'lnlIpcV2MYWyhIg7eGSMTnIiszX2': 'true'});
 
                             //Return to the discover page
                             Navigator.of(context).pushReplacement(
@@ -352,7 +354,7 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up'),
+        title: Text('Products'),
       ),
       body: Center(
         // Center is a layout widget. It takes a single child and positions it
@@ -408,18 +410,18 @@ class _LogProductsScreenState extends State<LogProductsScreen> {
                             });
                           },
                         );
-                        OutlineButton(
-                            borderSide: BorderSide(
-                              color: Colors.purple,
-                            ),
-                            child: new Text("Finished"),
-                            onPressed: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          Nav())); //Literally fix this
-                            });
+                      }),
+                  OutlineButton(
+                      borderSide: BorderSide(
+                        color: Colors.purple,
+                      ),
+                      child: new Text("Finished"),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    Nav())); //Literally fix this
                       })
                 ],
               ),
@@ -486,15 +488,17 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
     return pickedFile;
   }
 
-  Future<String> uploadFile(File _image) async {
-    Future<String> _url;
+  Future uploadFile(File _image) async {
     FirebaseStorage storage = FirebaseStorage.instance;
-    Reference ref =
-        storage.ref().child("Users/" + businessFirestoreDocumentID + "/");
-    UploadTask uploadTask = ref.putFile(_image);
-    uploadTask.then((res) {
-      _url = res.ref.getDownloadURL();
-    });
+    Reference imageRef = storage
+        .ref()
+        .child("Users/" + businessFirestoreDocumentID + "/profileImage");
+    UploadTask uploadTask = imageRef.putFile(_image);
+    var imageUrl = await (await uploadTask).ref.getDownloadURL();
+    var url = imageUrl.toString();
+    print(url);
+
+    //write URL of profile photo to user's document in firebase
 
     //write URL of profile photo to business's document in firebase
     firestoreInstance
@@ -502,10 +506,10 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
         .doc(businessFirestoreDocumentID)
         .set({
       "ImageCount": 1,
-      "ImageURL": _url,
+      "ImageURL": url,
     });
 
-    return _url;
+    return url;
   }
 
   _BusinessPhotoUploadScreenState(businessFirestoreDocumentID);
@@ -517,12 +521,12 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Firestore File Upload'),
+        title: Text('Business Image Upload'),
       ),
       body: Center(
         child: Column(
           children: <Widget>[
-            Text('Selected Image'),
+            Text('Select an Image of Your Business'),
             _image != null
                 ? Image.file(
                     _image,
@@ -551,7 +555,12 @@ class _BusinessPhotoUploadScreenState extends State<BusinessPhotoUploadScreen> {
                 ? RaisedButton(
                     child: Text('Upload File'),
                     onPressed: () async {
-                      _uploadedFileURL = await uploadFile(_image);
+                      uploadFile(_image);
+
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LogProductsScreen()));
                     },
                     color: Colors.cyan,
                   )
@@ -582,6 +591,7 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
   //Variable Declarations
   String _email = "";
   String _password = "";
+  String _name = "";
   final auth = FirebaseAuth.instance;
   final firestoreInstance = FirebaseFirestore.instance;
   String _userFirestoreDocumentID;
@@ -614,6 +624,14 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                       });
                     },
                   ),
+                  TextField(
+                    decoration: InputDecoration(hintText: "Display Name"),
+                    onChanged: (value) {
+                      setState(() {
+                        _name = value.trim();
+                      });
+                    },
+                  ),
                   Row(
                     children: [
                       RaisedButton(
@@ -622,6 +640,16 @@ class _CustomerLoginScreenState extends State<CustomerLoginScreen> {
                             //Authenticate the User
                             auth.createUserWithEmailAndPassword(
                                 email: _email, password: _password);
+
+                            firestoreInstance
+                                .collection("Users")
+                                .doc(auth.currentUser.uid)
+                                .set({
+                              "Name": _name,
+                              "iD": auth.currentUser.uid,
+                            }).then((value) {
+                              print("WRITTEN");
+                            });
 
                             await FirebaseDatabase.instance
                                 .reference()
@@ -734,9 +762,21 @@ class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
   //   });
   // }
 
-  Future getImage() async {
+  Future<File> getImage(bool gallery) async {
     //PickedFile pickedFile;
-    final pickedFile = await ImagePicker.pickImage(source: ImageSource.camera);
+    File pickedFile;
+    // Let user select photo from gallery
+    if (gallery) {
+      pickedFile = await ImagePicker.pickImage(
+        source: ImageSource.gallery,
+      );
+    }
+    // Otherwise open camera to get new photo
+    else {
+      pickedFile = await ImagePicker.pickImage(
+        source: ImageSource.camera,
+      );
+    }
 
     setState(() {
       if (pickedFile != null) {
@@ -787,7 +827,7 @@ class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
                   ? RaisedButton(
                       child: Text('Choose Image'),
                       onPressed: () async {
-                        _image = await getImage();
+                        _image = await getImage(true);
                       },
                       color: Colors.pinkAccent,
                     )
@@ -796,7 +836,7 @@ class _ProfilePhotoUploadScreenState extends State<ProfilePhotoUploadScreen> {
                   ? RaisedButton(
                       child: Text('Take Photo'),
                       onPressed: () async {
-                        _image = await getImage();
+                        _image = await getImage(false);
                       },
                       color: Colors.pinkAccent,
                     )
