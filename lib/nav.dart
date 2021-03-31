@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:bijou/searchpage.dart';
 import 'package:bijou/discover.dart';
+import 'package:bijou/boards.dart';
 import 'package:bijou/signinpage.dart';
 import 'package:bijou/authservice.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -18,7 +19,7 @@ class _NavState extends State<Nav> {
   List<Widget> _widgetOptions = <Widget>[
     MyHomePage(),
     SearchPage(),
-    Text('Boards'),
+    Boards(),
     SignInPage(),
   ];
 

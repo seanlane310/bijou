@@ -5,7 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:async/async.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'package:bijou/productpage.dart';
 import 'signIn.dart';
 
 //when connect auth:
@@ -116,7 +116,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   buttonHeight: 10,
                   children: [
                     TextButton(
-                      onPressed: () {},
+                      onPressed: () {/*
+                      Navigator.of(context).push(MaterialPageRoute(builder: (context) => productpage( product: data)));   
+                      */},
                       child: Text(data['Name'],style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                     ),
 
